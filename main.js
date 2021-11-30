@@ -300,7 +300,7 @@ class Cube {
 		ctx.fillText("Prayogi learning 3D perspective projection", 10, 30);
 		ctx.font = "15px Arial";
 		ctx.fillText("Press 'H' key to show / hide controls", 10, 55);
-		ctx.fillText("Mouse sensitivity: " + mouseSensitivity, 335, 55);
+		ctx.fillText("Mouse sensitivity: " + mouseSensitivity.toFixed(2), 335, 55);
 		ctx.fillStyle = "#fdad5c";
 		if (showHelp) {
 			ctx.globalAlpha = 0.3;
