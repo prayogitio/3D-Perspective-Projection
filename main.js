@@ -1,5 +1,4 @@
 const canvas = document.getElementById('scene');
-document.body.style.cursor = "none";
 
 let width = canvas.offsetWidth;
 let height = canvas.offsetHeight;
@@ -15,9 +14,12 @@ var targettedCubes = [];
 var angle = degree_to_radian(1);
 var lastMouseXPos = 0;
 var lastMouseYPos = 0;
-const mouseSensitivity = 0.7;
+var mouseSensitivity = 0.7;
 var showCollisionCircles = false;
 var showHelp = false;
+var trackMouseMovement = false;
+var centerDot = new Path2D();
+centerDot.arc(PROJECTION_CENTER_X, PROJECTION_CENTER_Y, 5, 0, degree_to_radian(1), true);
 
 class Vector {
 	constructor(x = 0, y = 0, z = 0) {
@@ -115,35 +117,54 @@ window.addEventListener('keydown', function (e) {
 		showCollisionCircles = !showCollisionCircles;
 	} else if (code == 72) {
 		showHelp = !showHelp;
+	} else if (code == 221) {
+		mouseSensitivity += 0.1;
+		if (mouseSensitivity > 2.0) {
+			mouseSensitivity = 2.0;
+		}
+		mouseSensitivity.toFixed(2);
+	} else if (code == 219) {
+		mouseSensitivity -= 0.1;
+		if (mouseSensitivity < 0) {
+			mouseSensitivity = 0;
+		}
+		mouseSensitivity.toFixed(2);
 	}
 });
 
-window.addEventListener('mousemove', function (e) {
-	if (lastMouseXPos == 0 && lastMouseYPos == 0) {
+canvas.addEventListener('mousemove', function (e) {
+	if (trackMouseMovement) {
+		if (lastMouseXPos == 0 && lastMouseYPos == 0) {
+			lastMouseXPos = e.x;
+			lastMouseYPos = e.y;
+		}
+		let xOffset = lastMouseXPos - e.x;
+		let yOffset = lastMouseYPos - e.y;
 		lastMouseXPos = e.x;
 		lastMouseYPos = e.y;
-	}
-	let xOffset = lastMouseXPos - e.x;
-	let yOffset = lastMouseYPos - e.y;
-	lastMouseXPos = e.x;
-	lastMouseYPos = e.y;
-	xOffset *= mouseSensitivity;
-	yOffset *= mouseSensitivity;
-	camera.yaw += xOffset;
-	camera.pitch += yOffset;
-	if (camera.pitch > 89) {
-		camera.pitch = 89;
-	}
-	if (camera.pitch < -89) {
-		camera.pitch = -89;
+		xOffset *= mouseSensitivity;
+		yOffset *= mouseSensitivity;
+		camera.yaw += xOffset;
+		camera.pitch += yOffset;
+		if (camera.pitch > 89) {
+			camera.pitch = 89;
+		}
+		if (camera.pitch < -89) {
+			camera.pitch = -89;
+		}
 	}
 });
 
-window.addEventListener('click', function (e) {
-	setTargettedCubes();
-	if (targettedCubes.length > 0) {
-		targettedCubes[0].isVisible = false;
-		clearTargettedCubes();
+canvas.addEventListener('click', function (e) {
+	if (!trackMouseMovement && ctx.isPointInPath(centerDot, e.offsetX, e.offsetY)) {
+		trackMouseMovement = true;
+		document.body.style.cursor = 'none';
+	} else if (trackMouseMovement) {
+		setTargettedCubes();
+		if (targettedCubes.length > 0) {
+			targettedCubes[0].isVisible = false;
+			clearTargettedCubes();
+		}
 	}
 });
 
@@ -270,26 +291,41 @@ class Cube {
 		}
 
 		ctx.beginPath();
-		ctx.fillStyle = "#FF0000";
-		ctx.arc(PROJECTION_CENTER_X, PROJECTION_CENTER_Y, 2, 0, degree_to_radian(1), true);
+		ctx.fillStyle = 'red';
 		ctx.closePath();
-		ctx.fill();
+		ctx.fill(centerDot);
 
 		ctx.fillStyle = "#FFFFFF";
 		ctx.font = "20px Arial";
 		ctx.fillText("Prayogi learning 3D perspective projection", 10, 30);
-		ctx.font = "17px Arial";
+		ctx.font = "15px Arial";
 		ctx.fillText("Press 'H' key to show / hide controls", 10, 55);
+		ctx.fillText("Mouse sensitivity: " + mouseSensitivity, 335, 55);
+		ctx.fillStyle = "#fdad5c";
 		if (showHelp) {
-			ctx.fillText("W          : Move Forward", 10, 75);
-			ctx.fillText("A          : Move Left", 10, 95);
-			ctx.fillText("S          : Move Backward", 10, 115);
-			ctx.fillText("D          : Move Right", 10, 135);
-			ctx.fillText("ARROW UP   : Move Camera Up", 10, 155);
-			ctx.fillText("ARROW DOWN : Move Camera Down", 10, 175);
-			ctx.fillText("C          : Show Collision Detection Box", 10, 195);
-			ctx.fillText("MOUSE DRAG HORIZONTAL AND VERTICAL : Look Around", 10, 215);
-			ctx.fillText("MOUSE LEFT CLICK : Destroy cube", 10, 235);
+			ctx.globalAlpha = 0.3;
+			ctx.fillRect(5, 70, 400, 250);
+			ctx.globalAlpha = 1.0;
+			ctx.fillStyle = "#4a3807";
+			ctx.fillText("W : Move Forward", 17, 100);
+			ctx.fillText("A  : Move Left", 17, 120);
+			ctx.fillText("S  : Move Backward", 17, 140);
+			ctx.fillText("D  : Move Right", 17, 160);
+			ctx.fillText("C  : Show Collision Detection Box", 17, 180);
+			ctx.fillText("[   : Increase mouse sensitivity", 17, 200);
+			ctx.fillText("]   : Decrease mouse sensitivity", 17, 220);
+			ctx.fillText("ARROW UP        : Move Camera Up", 17, 240);
+			ctx.fillText("ARROW DOWN : Move Camera Down", 17, 260);
+			ctx.fillText("Mouse drag vertical and horizontal : Look Around", 17, 280);
+			ctx.fillText("Mouse left click : Destroy cube", 17, 300);
+		}
+		if (!trackMouseMovement && !showHelp) {
+			ctx.globalAlpha = 0.3;
+			ctx.fillRect(100, 260, 300, 30);
+			ctx.globalAlpha = 1.0;
+			ctx.font = "14px Arial";
+			ctx.fillStyle = "#4a3807";
+			ctx.fillText("Click on the red dot to allow mouse tracking", 113, 280);
 		}
 	}
 }
